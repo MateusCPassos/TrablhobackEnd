@@ -58,6 +58,14 @@ const deleteRecipe = async(recipeId, userId) => {
   });
 }
 
+const findRecipeById = (recipeId) => {
+  const id = Number(recipeId);
+
+  return prisma.recipe.findUnique({
+    where: { id },
+  });
+};
+
 
 
 module.exports = {
@@ -65,4 +73,5 @@ module.exports = {
   saveRecipe,
   updateRecipe,
   deleteRecipe,
+  findRecipeById
 };

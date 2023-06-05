@@ -1,29 +1,47 @@
 const express = require("express");
 const z = require("zod");
-const { findAllRecipes, saveRecipe, updateRecipe, deleteRecipe} = require("../database/recipe");
-const {recipe} = require("../database/recipe");
+const { findAllRecipes, saveRecipe, updateRecipe, deleteRecipe, findRecipeById } = require("../database/recipe");
+const { recipe } = require("../database/recipe");
 const auth = require("../middlewares/auth");
 
 const router = express.Router();
 
 const RecipeSchema = z.object({
   name: z.string().min(3),
-  description: z.string().min(10),
+  description: z.string().min(5),
   preparationTime: z.number().min(1),
 });
 
-router.get("/recipe", auth , async (req, res) => {
+router.get("/recipe", auth, async (req, res) => {
   const recipe = await findAllRecipes(req.userId);
   res.json({ recipe });
 });
 
-router.post("/recipe", auth ,async (req, res) => {
+router.get("/recipe/:id", auth, async (req, res) => {
+  try {
+    const recipeId = req.params.id;
+    const userId = req.userId;
+    const recipe = await findRecipeById(recipeId, userId);
+    if (!recipe) {
+      return res.status(404).json({
+        message: "Recipe not found",
+      });
+    }
+    res.json({ recipe });
+  } catch (error) {
+    res.status(500).json({
+      message: "Server error",
+    });
+  }
+});
+
+router.post("/recipe", auth, async (req, res) => {
   try {
     const recipe = RecipeSchema.parse(req.body);
     const userId = req.userId;
     const savedRecipe = await saveRecipe(recipe, userId);
     res.status(201).json({
-      recipe: savedRecipe 
+      recipe: savedRecipe
     });
   } catch (error) {
     if (error instanceof z.ZodError) {
@@ -38,7 +56,7 @@ router.post("/recipe", auth ,async (req, res) => {
 });
 
 
-router.put("/recipe/:id", auth ,async (req, res) => {
+router.put("/recipe/:id", auth, async (req, res) => {
   try {
     const recipeId = req.params.id;
     const recipe = RecipeSchema.parse(req.body);
@@ -59,7 +77,7 @@ router.put("/recipe/:id", auth ,async (req, res) => {
   }
 });
 
-router.delete("/recipe/:id", auth ,async (req, res) => {
+router.delete("/recipe/:id", auth, async (req, res) => {
   try {
     const recipeId = req.params.id;
     const userId = req.userId;
